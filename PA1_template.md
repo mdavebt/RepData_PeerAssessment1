@@ -1,100 +1,185 @@
 #Reproducible Research: Peer Assessment 1
 =========================================
 
-## Loading and preprocessing the data
-```{r}
-#install.packages("reshape2")
+```r
+install.packages("reshape2")
+```
+
+```
+## Installing package into 'C:/Users/mdave/Documents/R/win-library/3.5'
+## (as 'lib' is unspecified)
+```
+
+```
+## package 'reshape2' successfully unpacked and MD5 sums checked
+## 
+## The downloaded binary packages are in
+## 	C:\Users\mdave\AppData\Local\Temp\Rtmpu80aPi\downloaded_packages
+```
+
+```r
 library(reshape2)
-#install.packages("ggplot2")
+```
+
+```
+## Warning: package 'reshape2' was built under R version 3.5.1
+```
+
+```r
+install.packages("ggplot2")
+```
+
+```
+## Installing package into 'C:/Users/mdave/Documents/R/win-library/3.5'
+## (as 'lib' is unspecified)
+```
+
+```
+## package 'ggplot2' successfully unpacked and MD5 sums checked
+## 
+## The downloaded binary packages are in
+## 	C:\Users\mdave\AppData\Local\Temp\Rtmpu80aPi\downloaded_packages
+```
+
+```r
 library(ggplot2)
 ```
 
+```
+## Warning: package 'ggplot2' was built under R version 3.5.1
+```
+#Load the data
 
-```{r}
-unzipfile <- function(){
-	unzip("activity.zip")
-	paste("This file unzipped on",Sys.time())
-}
+```r
 read_data <- function(){
 	data <- read.csv("activity.csv")
-	meltdata <- melt(data,id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
+	data
+}
+```
+#Process/transform the data
+
+```r
+process_data_sum <- function(){
+  data1 <- read_data()
+	meltdata <- melt(data1,id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
 	dcastdata <- dcast(meltdata,date~variable,sum,na.rm=TRUE)
 	dcastdata
 }
+
+process_data_mean <- function(){
+  data1 <- read_data()
+	meltdata <- melt(data1,id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
+	dcastdata <- dcast(meltdata,date~variable,mean,na.rm=TRUE)
+	dcastdata
+}
 ```
+#What is mean Total number of steps taken per day
 
-
-## What is mean total number of steps taken per day?
-```{r}
+```r
 sumdata <- function(){
-	dcastdata <- read_data()
+	dcastdata <- process_data_sum()
 	dcast_exp <- rep.int(dcastdata$date,dcastdata$steps)
 	hist(as.Date(dcast_exp,"%Y-%m-%d"),breaks=length(dcastdata$steps),freq=TRUE,main="Total number of steps each day",xlab="Day",ylab="Number of Steps",col="blue")
 }
-```
-```{r}
+
 sumdata()
 ```
 
-## What is the average daily activity pattern?
-```{r}
+```
+## Using STEPS as value column: use value.var to override.
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)
+#Mean and Median
+
+
+```r
 meandata <- function(){
-	dcastdata <- read_data()
+	dcastdata <- process_data_sum()
 	tsteps <- sum(dcastdata$steps)
 	ndays <- length(dcastdata$steps)
 	meansteps <- tsteps/ndays
 	paste("Mean number of steps per day is:",as.integer(meansteps))
 }
-```
-```{r}
 meandata()
 ```
-```{r}
+
+```
+## Using STEPS as value column: use value.var to override.
+```
+
+```
+## [1] "Mean number of steps per day is: 10766"
+```
+
+```r
 mediandata <- function(){
-	meltdata <- melt(read_data(),id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
-	dcastdata <- dcast(meltdata,date~variable,sum,na.rm=TRUE)
+	dcastdata <- process_data_sum()
 	tsteps <- median(dcastdata$steps)
 	paste("Median of steps in all days:",as.integer(tsteps))
 }
-```
 
-```{r}
 mediandata()
 ```
-```{r}
+
+```
+## Using STEPS as value column: use value.var to override.
+```
+
+```
+## [1] "Median of steps in all days: 10765"
+```
+#What is the average daily activity pattern
+
+```r
 average_steps <- function(){
-	data <- read.csv("activity.csv")
-	meltdata <- melt(data,id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
-	dcastdata <- dcast(meltdata,date~variable,mean)
+	dcastdata <- process_data_mean()
 	ggplot(dcastdata,aes(x=as.Date(date,"%Y-%m-%d"),y=steps))+geom_line()+labs(title="Average Steps Taken Every 5 Minutes Each Day")+labs(y="Average Steps")+labs(x="Day")
 }
-```
-```{r}
 average_steps()
 ```
-```{r}
+
+```
+## Using STEPS as value column: use value.var to override.
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+
+#Maximum Steps
+
+```r
 max_avg_steps <- function(){
-	data <- read.csv("activity.csv")
-	meltdata <- melt(data,id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
+	meltdata <- melt(read_data(),id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
 	dcastdata <- dcast(meltdata,date~variable,max,na.rm=TRUE)
 	maxsteps <- which(dcastdata$steps == max(dcastdata$steps,na.rm=TRUE))
 	maxdata <- dcastdata[maxsteps,]
 	paste("Maximum steps in 5 minute average is",maxdata$steps,"on",maxdata$date)
 }
-```	
-```{r}
 max_avg_steps()
 ```
-## Imputing missing values
-```{r}
+
+```
+## Using STEPS as value column: use value.var to override.
+```
+
+```
+## Warning in .fun(.value[0], ...): no non-missing arguments to max; returning
+## -Inf
+```
+
+```
+## [1] "Maximum steps in 5 minute average is 806 on 2012-11-27"
+```
+#Imputing missing values
+
+```r
 complete_cases <- function(){
-	data <- read.csv("activity.csv")
+	data <- read_data()
 	complete_data <- complete.cases(data)
 	data <- data[complete_data,]
 	data
 }
 
-```{r}
 imputed_total <- function(){
 	meltdata <- melt(complete_cases(),id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
 	dcastdata <- dcast(meltdata,date~variable,sum,na.rm=TRUE)
@@ -102,18 +187,20 @@ imputed_total <- function(){
 	hist(as.Date(dcast_exp,"%Y-%m-%d"),breaks=length(dcastdata$steps),freq=TRUE,main="Total number of steps each day after removing missing data",xlab="Day",ylab="Number of Steps",col="red")
 	
 }
-```
-```{r}
 imputed_total()
 ```
 
+```
+## Using STEPS as value column: use value.var to override.
+```
 
-## Are there differences in activity patterns between weekdays and weekends?
-```{r}
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+
+#Are there differences in activity patterns between weekdays and weekends?
+
+```r
 panel_plot <- function(){
-	data <- read.csv("activity.csv")
-	meltdata <- melt(data,id.vars = "date",measure.vars="steps",na.rm=TRUE,value.name="STEPS")
-	dcastdata <- dcast(meltdata,date~variable,mean)
+	dcastdata <- process_data_mean()
 
 	dcastdata$day <- weekdays(as.Date(dcastdata$date,"%Y-%m-%d"),abbreviate=TRUE)
 
@@ -124,7 +211,16 @@ panel_plot <- function(){
 	}
 	ggplot(dcastdata,aes(x=as.Date(date,"%Y-%m-%d"),y=steps))+geom_line()+labs(title="Average Steps Taken Every 5 Minutes Each Day")+labs(y="Average Steps")+labs(x="Day")+facet_wrap(.~daytype,nrow=2)
 }
-```
-```{r}
 panel_plot()
 ```
+
+```
+## Using STEPS as value column: use value.var to override.
+```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+
+
+
+
+
